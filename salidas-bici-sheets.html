@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Salidas en bici</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#e9eff2;--panel:#fff;--ink:#14232f;--mute:#5b6b76;--line:#d3dde3;--acc:#0b6a8a;--onacc:#fff;--warn:#a8481a;--bar:#7fb4c8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101b22;--panel:#18262f;--ink:#e6eef2;--mute:#93a5b0;--line:#2b3d48;--acc:#5cc0e0;--onacc:#06222d;--warn:#ef9a6b;--bar:#2f7893}}
+:root[data-theme="dark"]{--bg:#101b22;--panel:#18262f;--ink:#e6eef2;--mute:#93a5b0;--line:#2b3d48;--acc:#5cc0e0;--onacc:#06222d;--warn:#ef9a6b;--bar:#2f7893}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 Barlow,system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:20px 16px 48px}
+h1,h2,.num{font-family:"Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.01em}
+h1{font-size:2rem;margin:0 0 14px;font-weight:700}
+h2{font-size:1.35rem;margin:0 0 10px;font-weight:700}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:16px}
+.hero{display:grid;grid-template-columns:repeat(3,1fr);background:var(--ink);color:var(--bg);border-radius:10px;overflow:hidden}
+.hero div{padding:14px 16px;border-right:1px solid rgba(128,128,128,.35)}
+.hero div:last-child{border-right:0}
+.hero .num{font-size:clamp(2rem,7vw,3.4rem);font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.hero small{display:block;opacity:.75;font-size:.9rem;margin-top:4px}
+form{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+label{display:flex;flex-direction:column;font-size:.9rem;color:var(--mute);gap:4px}
+input[type=text],input[type=date],input[type=password]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 10px;min-height:44px;width:100%}
+fieldset{grid-column:1/-1;border:1px solid var(--line);border-radius:8px;margin:0;padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px 18px}
+legend{font-size:.9rem;color:var(--mute);padding:0 6px}
+fieldset label{flex-direction:row;align-items:center;color:var(--ink);font-size:1rem;min-height:36px}
+input[type=checkbox]{width:20px;height:20px;accent-color:var(--acc)}
+button{font:600 1rem Barlow,sans-serif;border:0;border-radius:6px;padding:10px 18px;min-height:44px;background:var(--acc);color:var(--onacc);cursor:pointer}
+button.g{background:transparent;color:var(--acc);border:1px solid var(--acc)}
+button.x{background:transparent;color:var(--warn);padding:4px 10px;min-height:36px;font-size:1.1rem}
+button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.msg{grid-column:1/-1;margin:0;min-height:1.4em;font-size:.95rem}
+.err{color:var(--warn)}.ok{color:var(--acc)}
+.st{margin:8px 0 0;color:var(--mute);font-size:.92rem;min-height:1.4em}
+.wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;font-size:.88rem;color:var(--mute);white-space:normal;vertical-align:bottom}
+tfoot td{font-weight:700;border-bottom:0}
+.bar{display:inline-block;height:10px;background:var(--bar);border-radius:2px;vertical-align:middle;margin-left:8px}
+.cur{font-weight:700;color:var(--acc)}
+.note{color:var(--mute);font-size:.92rem;margin:10px 0 0}
+#conn[hidden]{display:none}
+#conn .r{display:flex;gap:10px;flex-wrap:wrap}#conn input{flex:1;min-width:200px}
+@media (max-width:620px){form{grid-template-columns:1fr}.hero div{padding:10px}}
+</style>
+</head>
+<body>
+<main>
+<h1>Salidas en bici</h1>
+<div class="hero" id="hero"></div>
+<p class="st" id="st" role="status"></p>
+
+<section id="conn" hidden>
+<h2>Conectar con la hoja de cálculo</h2>
+<p class="note">Escribe la clave que pusiste en el script de Google. Se guarda en este dispositivo y solo tendrás que hacerlo una vez.</p>
+<div class="r"><input type="password" id="ck" aria-label="Clave" autocomplete="off"><button id="cb" type="button">Conectar</button></div>
+<p class="msg err" id="cm"></p>
+</section>
+
+<section>
+<h2>Nueva salida</h2>
+<form id="f" autocomplete="off">
+<label>Fecha<input type="date" id="d" required></label>
+<label>Kilómetros recorridos<input type="text" id="k" inputmode="decimal" placeholder="85,40"></label>
+<label>Tiempo empleado (h:mm:ss)<input type="text" id="t" inputmode="numeric" placeholder="3:25:10"></label>
+<fieldset><legend>¿Has cambiado o recargado algo antes de esta salida?</legend>
+<label><input type="checkbox" name="c" value="0">Cubierta delantera</label>
+<label><input type="checkbox" name="c" value="1">Cubierta trasera</label>
+<label><input type="checkbox" name="c" value="2">Batería del cambio</label>
+<label><input type="checkbox" name="c" value="3">Batería maneta izq.</label>
+<label><input type="checkbox" name="c" value="4">Batería maneta der.</label></fieldset>
+<div><button type="submit">Añadir salida</button></div>
+<p class="msg" id="msg" role="status"></p>
+</form>
+</section>
+
+<section>
+<h2>Componentes</h2>
+<div class="wrap"><table id="comp"></table></div>
+<p class="note">Los contadores vuelven a cero en la salida marcada con cambio o recarga. Si no hay ninguna marca, cuentan desde la primera salida.</p>
+</section>
+
+<section>
+<h2>Estadísticas por meses</h2>
+<div class="wrap"><table id="mes"></table></div>
+</section>
+
+<section>
+<h2>Registro de salidas</h2>
+<div class="wrap"><table id="reg"></table></div>
+</section>
+</main>
+<script>
+// Pega aquí la URL de tu aplicación web de Apps Script (termina en /exec).
+// Si la dejas vacía, la página funciona en modo local: los datos solo se guardan en este navegador.
+var APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbwFtnbO3osyU68L8gTBZFQDhRThU-E9XV_9Tu8jKbGSKIxtiqhH9oJS_7d6Y6umZgDm/exec';
+
+var KEYN='salidas-bici-clave',LKEY='salidas-bici-local',remote=!!APPS_SCRIPT_URL;
+var SEED=[["2026-08-25",78.84,12218,[0,0,0,0,0]],["2026-08-26",61.59,10143,[0,0,0,0,0]],["2026-08-27",80.95,11872,[0,0,0,0,0]],["2026-08-28",89.19,13934,[0,0,0,0,0]],["2026-08-30",32.48,6960,[0,0,0,0,0]],["2026-09-01",108.38,15749,[0,0,0,0,0]],["2026-09-12",116.64,15926,[0,0,0,0,0]],["2026-09-15",86.43,13200,[0,0,0,0,0]],["2026-09-19",100.9,14994,[0,0,0,0,0]],["2026-09-24",106.84,15010,[0,0,0,0,0]],["2026-09-26",28.57,5095,[0,0,0,0,0]],["2026-09-29",84.25,11992,[0,0,0,0,0]],["2026-09-30",86.05,12617,[0,0,0,0,0]],["2026-10-01",102.09,14340,[0,0,0,0,0]],["2026-10-06",82.5,12240,[0,0,0,0,0]],["2026-10-08",68.02,11040,[0,0,0,0,0]],["2026-10-10",120.28,16500,[0,0,0,0,0]],["2026-10-13",97.09,13544,[0,0,1,0,0]],["2026-10-14",80.71,11835,[0,0,0,0,0]],["2026-10-15",102.08,14797,[0,0,0,0,0]],["2026-10-16",64.41,10457,[0,0,0,0,0]],["2026-10-17",111.15,14823,[0,0,0,0,0]]];
+var COMP=[{n:'Cubierta delantera (D)',t:0},{n:'Cubierta trasera (T)',t:0},{n:'Cambio (batería)',t:1},{n:'Maneta izquierda (batería)',t:1},{n:'Maneta derecha (batería)',t:1}];
+var MES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+var rows=[],busy=false;
+function $(i){return document.getElementById(i)}
+function uid(){return 'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function cmp(a,b){return a.d<b.d?-1:a.d>b.d?1:0}
+function sget(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function sset(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function seedRows(){return SEED.map(function(r){return{id:uid(),d:r[0],k:r[1],s:r[2],f:r[3].slice()}})}
+
+/* Almacenamiento: Google Sheets (remoto) o navegador (local) */
+function post(a,x){
+ var key=sget(KEYN);
+ if(!key){var e=new Error('nokey');e.code='nokey';return Promise.reject(e)}
+ return fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({a:a,key:key},x||{}))})
+  .then(function(r){return r.json()})
+  .then(function(j){if(!j.ok){var e=new Error(j.error);e.code=j.error;throw e}return j.rows})
+}
+function lmut(fn){var a=null;try{a=JSON.parse(sget(LKEY))}catch(e){}if(!Array.isArray(a))a=seedRows();fn(a);a.sort(cmp);sset(LKEY,JSON.stringify(a));return Promise.resolve(a)}
+var api=remote?{
+ list:function(){return post('list')},
+ add:function(r){return post('add',{row:r})},
+ flag:function(id,i,v){return post('flag',{id:id,i:i,v:v})},
+ del:function(id){return post('del',{id:id})},
+ bulk:function(rs){return post('bulk',{rows:rs})}
+}:{
+ list:function(){return lmut(function(){})},
+ add:function(r){return lmut(function(a){a.push(r)})},
+ flag:function(id,i,v){return lmut(function(a){a.forEach(function(r){if(r.id==id)r.f[i]=v?1:0})})},
+ del:function(id){return lmut(function(a){var j=a.findIndex(function(r){return r.id==id});if(j>=0)a.splice(j,1)})},
+ bulk:function(rs){return lmut(function(a){rs.forEach(function(r){a.push(r)})})}
+};
+function say(t,c){var e=$('msg');e.textContent=t;e.className='msg '+c}
+function showConn(m){$('conn').hidden=false;$('cm').textContent=m||'';$('ck').focus()}
+function run(fn,okMsg){
+ if(busy)return Promise.resolve();
+ busy=true;$('st').textContent=remote?'Sincronizando con la hoja de cálculo…':'';
+ return fn().then(function(a){rows=a;busy=false;$('st').textContent='';render();if(okMsg)say(okMsg,'ok');return true})
+ .catch(function(e){busy=false;$('st').textContent='';render();
+  if(e&&e.code==='nokey')showConn('');
+  else if(e&&e.code==='clave'){try{localStorage.removeItem(KEYN)}catch(x){}showConn('La clave no es correcta. Escríbela de nuevo.')}
+  else say('No se ha podido conectar con la hoja de cálculo. Comprueba la conexión y vuelve a intentarlo.','err');
+  return false});
+}
+
+/* Formato */
+function km(n){return n.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function tm(s){s=Math.round(s);var h=Math.floor(s/3600),m=Math.floor(s%3600/60),c=s%60;return h+':'+(m<10?'0':'')+m+':'+(c<10?'0':'')+c}
+function fd(d){var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0]}
+
+function render(){
+ var tk=0,ts=0;rows.forEach(function(r){tk+=r.k;ts+=r.s});
+ $('hero').innerHTML='<div><span class="num">'+km(tk)+'</span><small>kilómetros totales</small></div><div><span class="num">'+tm(ts)+'</span><small>tiempo total</small></div><div><span class="num">'+rows.length+'</span><small>salidas</small></div>';
+ var h='<thead><tr><th>Componente</th><th>Km desde el último cambio o recarga</th><th>Tiempo actual</th><th>Cambios o recargas</th><th>Último ciclo (km)</th><th>Último ciclo (tiempo)</th><th>Media por ciclo (km)</th><th>Media por ciclo (tiempo)</th></tr></thead><tbody>';
+ COMP.forEach(function(c,i){
+  var ak=0,as=0,n=0,lk=0,ls=0;
+  rows.forEach(function(r){if(r.f[i]){lk=ak;ls=as;n++;ak=r.k;as=r.s}else{ak+=r.k;as+=r.s}});
+  h+='<tr><td>'+c.n+'</td><td class="cur">'+km(ak)+'</td><td>'+(c.t?tm(as):'–')+'</td><td>'+n+'</td><td>'+(n?km(lk):'')+'</td><td>'+(n&&c.t?tm(ls):'–')+'</td><td>'+(n?km((tk-ak)/n):'')+'</td><td>'+(n&&c.t?tm((ts-as)/n):'–')+'</td></tr>';
+ });
+ $('comp').innerHTML=h+'</tbody>';
+ var m={},keys=[];
+ rows.forEach(function(r){var k=r.d.slice(0,7);if(!m[k]){m[k]={k:0,s:0};keys.push(k)}m[k].k+=r.k;m[k].s+=r.s});
+ keys.sort();
+ if(keys.length){var a=keys[0].split('-'),b=keys[keys.length-1].split('-'),y=+a[0],mo=+a[1],all=[];
+  while(y<+b[0]||(y==+b[0]&&mo<=+b[1])){all.push(y+'-'+(mo<10?'0':'')+mo);mo++;if(mo>12){mo=1;y++}}
+  var mx=Math.max.apply(null,all.map(function(k){return m[k]?m[k].k:0}))||1;
+  var t='<thead><tr><th>Mes</th><th>Kilómetros</th><th>Tiempo</th></tr></thead><tbody>';
+  all.forEach(function(k){var v=m[k]||{k:0,s:0},p=k.split('-');t+='<tr><td>'+MES[+p[1]-1]+' '+p[0]+'</td><td>'+km(v.k)+'<span class="bar" style="width:'+Math.round(v.k/mx*90)+'px"></span></td><td>'+tm(v.s)+'</td></tr>'});
+  $('mes').innerHTML=t+'</tbody><tfoot><tr><td>Total</td><td>'+km(tk)+'</td><td>'+tm(ts)+'</td></tr></tfoot>';
+ }else $('mes').innerHTML='<tbody><tr><td>Añade tu primera salida para ver las estadísticas.</td></tr></tbody>';
+ if(!rows.length){$('reg').innerHTML='<tbody><tr><td>Todavía no hay salidas. <button class="g" id="seed" type="button">Cargar mis 22 salidas iniciales</button></td></tr></tbody>';return}
+ var g='<thead><tr><th>Fecha</th><th>Km</th><th>Tiempo</th><th>Cub. D</th><th>Cub. T</th><th>Cambio</th><th>Maneta I</th><th>Maneta D</th><th></th></tr></thead><tbody>';
+ for(var j=rows.length-1;j>=0;j--){var r=rows[j];
+  g+='<tr><td>'+fd(r.d)+'</td><td>'+km(r.k)+'</td><td>'+tm(r.s)+'</td>';
+  for(var q=0;q<5;q++)g+='<td><input type="checkbox" data-id="'+r.id+'" data-c="'+q+'"'+(r.f[q]?' checked':'')+' aria-label="'+COMP[q].n+' el '+fd(r.d)+'"></td>';
+  g+='<td><button class="x" data-del="'+r.id+'" aria-label="Borrar la salida del '+fd(r.d)+'">✕</button></td></tr>';
+ }
+ $('reg').innerHTML=g+'</tbody>';
+}
+
+/* Acciones */
+$('f').addEventListener('submit',function(e){
+ e.preventDefault();
+ var d=$('d').value,k=parseFloat($('k').value.replace(',','.')),tt=$('t').value.trim().match(/^(\d+):([0-5]?\d)(?::([0-5]?\d))?$/);
+ if(!d)return say('Elige la fecha de la salida.','err');
+ if(!(k>0))return say('Escribe los kilómetros como número, por ejemplo 85,40.','err');
+ if(!tt)return say('Escribe el tiempo como h:mm:ss, por ejemplo 3:25:10.','err');
+ var f=[0,0,0,0,0];document.querySelectorAll('input[name=c]:checked').forEach(function(c){f[+c.value]=1});
+ var row={id:uid(),d:d,k:Math.round(k*100)/100,s:+tt[1]*3600+(+tt[2])*60+(+(tt[3]||0)),f:f};
+ say('Guardando…','');
+ run(function(){return api.add(row)}).then(function(ok){
+  if(!ok)return;
+  $('k').value='';$('t').value='';document.querySelectorAll('input[name=c]').forEach(function(c){c.checked=false});
+  say('Salida del '+fd(d)+' guardada.','ok');
+ });
+});
+$('reg').addEventListener('change',function(e){var t=e.target;if(!t.dataset.id)return;if(busy){render();return}
+ run(function(){return api.flag(t.dataset.id,+t.dataset.c,t.checked)})});
+$('reg').addEventListener('click',function(e){
+ if(e.target.id==='seed'){run(function(){return api.bulk(seedRows())},'Salidas iniciales cargadas.');return}
+ var b=e.target.closest('[data-del]');if(!b)return;
+ var r=rows.filter(function(x){return x.id==b.dataset.del})[0];
+ if(r&&confirm('¿Borrar la salida del '+fd(r.d)+'?'))run(function(){return api.del(r.id)});
+});
+$('cb').addEventListener('click',function(){var v=$('ck').value.trim();if(!v)return;sset(KEYN,v);$('ck').value='';$('conn').hidden=true;run(api.list)});
+$('ck').addEventListener('keydown',function(e){if(e.key==='Enter')$('cb').click()});
+
+var n=new Date();$('d').value=n.getFullYear()+'-'+('0'+(n.getMonth()+1)).slice(-2)+'-'+('0'+n.getDate()).slice(-2);
+render();
+if(!remote)$('st').textContent='Modo local: los datos solo se guardan en este navegador.';
+if(!remote||sget(KEYN))run(api.list);else showConn('');
+</script>
+</body>
+</html>
